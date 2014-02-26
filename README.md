@@ -1,6 +1,4 @@
-shooter2
-========
+Galaga 
 
-An example of keyboard control in Enchant.js. This is a modification of one of the expert examples
-in the Enchant.js distribution. You can play it [here](http://webcoding.cistercian.us/shooter2/).
+This is a replica of Galaga in javascript using the enchant game engine
 

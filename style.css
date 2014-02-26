@@ -1,0 +1,17 @@
+body {
+    margin: 20px 80px;
+}
+
+h1 {
+	font-size: large;
+	font-family: "Gill Sans MT", sans-serif;
+}
+
+p {
+	font-family: "Gill Sans MT", sans-serif;
+}
+
+#enchant-stage {
+    height: 640px;
+    width:  640px;
+}

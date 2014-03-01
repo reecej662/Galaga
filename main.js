@@ -2,10 +2,19 @@ enchant();
 
 var MOVESPEED = 5;
 
-var PLAYERFRAME = 1;
-var ENEMYFRAME = 17;
-var PLAYERSHOOTFRAME = 40;
-var ENEMYSHOOTFRAME = 40;
+var PLAYERFRAME = 0;
+var ENEMYFRAME = [16, 17, 24, 25, 32, 33, 40, 41];
+var EEXPLODE = [0, 1, 2, 3, 4];
+var PEXPLODE = [5, 6, 7, 8];
+var PLAYERSHOOTFRAME = 7;
+var ENEMYSHOOTFRAME = 15;
+
+var SPRITE_SIZE = 32;
+
+// Conveniently generate a random integer from 0 up to the limit for the four different enemies.
+function randInt(limit) {
+    return Math.floor(Math.random() * limit);
+}
 
 window.onload = function () {
     game = new Game(320, 320);
@@ -13,9 +22,9 @@ window.onload = function () {
     game.score = 0;
     game.scale = 2;
     game.touched = false;
-    game.preload('sprites.png');
+    game.preload('sprites.png', 'explosion.png');
     game.onload = function () {
-        player = new Player(160, 250);
+        player = new Player(160, 275);
         enemies = new Array();
         game.rootScene.backgroundColor = 'black';
 
@@ -42,7 +51,7 @@ window.onload = function () {
 
 var Player = enchant.Class.create(enchant.Sprite, {
     initialize: function (x, y) {
-        enchant.Sprite.call(this, 47, 47);
+        enchant.Sprite.call(this, SPRITE_SIZE, SPRITE_SIZE);
         this.image = game.assets['sprites.png'];
         this.x = x;
         this.y = y;
@@ -52,10 +61,10 @@ var Player = enchant.Class.create(enchant.Sprite, {
             if(game.input.a && game.frame % 3 == 0) {
                 var s = new PlayerShoot(this.x, this.y);
             }
-            if (game.input.left) {
+            if (game.input.left && this.x > 0) {
                 this.x -= (MOVESPEED + 1);
             }
-            if (game.input.right) {
+            if (game.input.right && this.x < (320 - SPRITE_SIZE)) {
                 this.x += (MOVESPEED + 1);
             }
         });
@@ -67,12 +76,15 @@ var Player = enchant.Class.create(enchant.Sprite, {
 
 var Enemy = enchant.Class.create(enchant.Sprite, {
     initialize: function (x, y, omega) {
-        enchant.Sprite.call(this, 47, 47);
+        enchant.Sprite.call(this, SPRITE_SIZE, SPRITE_SIZE);
         this.image = game.assets['sprites.png'];
         this.x = x;
         this.y = y;
-        this.frame = ENEMYFRAME;
         this.omega = omega;
+
+        var enemyframes = randInt(4) * 2;
+        var framenum = enemyframes + 1;
+        this.frame = ENEMYFRAME[framenum];
 
         this.direction = 90;
         this.moveSpeed = 3;
@@ -83,6 +95,24 @@ var Enemy = enchant.Class.create(enchant.Sprite, {
                 this.remove();
             } else if(this.age % 40 == 0) {
                 var s = new EnemyShoot(this.x, this.y);
+            }
+
+            if(player.within(this, 8)) {
+                var x = player.x - 16;
+                var y = player.y - 16;
+                player.remove();
+                this.remove();
+                var explosion = new playerexplode(x, y);
+            }
+
+
+            if(this.age % 7 == 0) {
+              if(framenum == enemyframes + 1){
+                framenum = framenum - 1;
+              }else if(framenum == enemyframes){
+                framenum = framenum + 1;
+              }
+              this.frame = ENEMYFRAME[framenum];
             }
         });
         game.rootScene.addChild(this);
@@ -103,7 +133,7 @@ var Enemy = enchant.Class.create(enchant.Sprite, {
 
 var Shoot = enchant.Class.create(enchant.Sprite, {
     initialize: function (x, y, direction) {
-        enchant.Sprite.call(this, 47, 47);
+        enchant.Sprite.call(this, SPRITE_SIZE, SPRITE_SIZE);
         this.image = game.assets['sprites.png'];
         this.x = x;
         this.y = y;
@@ -133,6 +163,7 @@ var PlayerShoot = enchant.Class.create(Shoot, {
             for (var i in enemies) {
                 if(enemies[i].intersect(this)) {
                     this.remove();
+                    var explosion = new enemyexplode(enemies[i].x, enemies[i].y);
                     enemies[i].remove();
                     game.score += 100;
                 }
@@ -148,8 +179,70 @@ var EnemyShoot = enchant.Class.create(Shoot, {
         this.frame = ENEMYSHOOTFRAME;
         this.addEventListener('enterframe', function () {
             if(player.within(this, 8)) {
-                game.end(game.score, "SCORE: " + game.score)
+                var x = player.x - 16;
+                var y = player.y - 16;
+                player.remove();
+                this.remove();
+                var explosion = new playerexplode(x, y);
             }
         });
     }
+});
+
+
+var enemyexplode = enchant.Class.create(enchant.Sprite, {
+  initialize: function(x, y) {
+      enchant.Sprite.call(this, 64, 64);
+      this.image = game.assets['explosion.png'];
+      this.x = x;
+      this.y = y;
+      var i = 0;
+
+      this.addEventListener('enterframe', function() {
+          if(i < 5){
+            this.frame = EEXPLODE[i];
+            i++;
+          }
+          if(this.age % 6 == 0){
+            this.remove();
+          }
+      });
+
+      game.rootScene.addChild(this);
+    },
+
+  remove: function () {
+    game.rootScene.removeChild(this);
+    delete this;
+  }
+});
+
+var playerexplode = enchant.Class.create(enchant.Sprite, {
+  initialize: function(x, y) {
+      enchant.Sprite.call(this, 64, 64);
+      this.image = game.assets['explosion.png'];
+      this.x = x;
+      this.y = y;
+      var i = 0;
+      this.frame = 9;
+
+      this.addEventListener('enterframe', function() {
+          if(this.age % 6 == 0 && i < 4){
+            this.frame = PEXPLODE[i];
+            i++;
+          }
+          if(this.age % 10 == 0 && i == 4){
+            this.frame = PEXPLODE[3];
+            this.remove();
+            game.end(game.score, "SCORE: " + game.score)
+          }
+      });
+
+      game.rootScene.addChild(this);
+    },
+
+  remove: function () {
+    game.rootScene.removeChild(this);
+    delete this;
+  }
 });

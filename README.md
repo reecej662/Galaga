@@ -1,7 +1,7 @@
-Galaga 
+Galaga (Sort of)
 
-This is a replica of Galaga in javascript using the enchant game engine.
+This is a modified version of Galaga in JavaScript using the enchant game engine.
 Play it here:
 
-http://www.webcoding.cistercian.us/jackson/galaga.html
+http://webcoding.cistercian.us/jackson/galaga.html
 

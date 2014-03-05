@@ -1,3 +1,13 @@
+/***
+*
+*   Reece Jackson
+*
+*   A modified version of Galaga made using javascript and the enchant.js framework
+*
+*   Credits to the shooter example for some of the functionality
+*
+***/
+
 enchant();
 
 var MOVESPEED = 5;
@@ -11,7 +21,6 @@ var ENEMYSHOOTFRAME = 15;
 
 var SPRITE_SIZE = 32;
 
-// Conveniently generate a random integer from 0 up to the limit for the four different enemies.
 function randInt(limit) {
     return Math.floor(Math.random() * limit);
 }
@@ -22,11 +31,12 @@ window.onload = function () {
     game.score = 0;
     game.scale = 2;
     game.touched = false;
-    game.preload('sprites.png', 'explosion.png');
+    game.preload('sprites.png', 'explosion.png', 'shoot.wav', 'enemyexplode.wav', 'playerexplode.mp3', 'themesong.mp3', 'shoot1.wav', 'enemyexplode1.wav', 'endsong.wav');
     game.onload = function () {
         player = new Player(160, 275);
         enemies = new Array();
         game.rootScene.backgroundColor = 'black';
+        game.assets['themesong.mp3'].play();
 
         game.rootScene.addEventListener('enterframe', function () {
             if(rand(1000) < game.frame / 20 * Math.sin(game.frame / 100) + game.frame / 20 + 50) {
@@ -56,10 +66,27 @@ var Player = enchant.Class.create(enchant.Sprite, {
         this.x = x;
         this.y = y;
         this.frame = PLAYERFRAME;
+        this.state = 0; //0 means alive for practical purposes
+        var lastshootage = this.age;
+        var i = 0;
+        var j = 0;
 
         this.addEventListener('enterframe', function () {
-            if(game.input.a && game.frame % 3 == 0) {
-                var s = new PlayerShoot(this.x, this.y);
+            if(game.input.a && (this.age - lastshootage) > 6) {
+                var s = new PlayerShoot(this.x, this.y, i);
+                if(j == 0){
+                  game.assets['shoot.wav'].play();
+                  j = 1;
+                }else{
+                  game.assets['shoot1.wav'].play();
+                  j = 0;
+                }
+                lastshootage = this.age;
+                if(i == 0){
+                  i = 1;
+                }else if(i == 1){
+                  i = 0;
+                }
             }
             if (game.input.left && this.x > 0) {
                 this.x -= (MOVESPEED + 1);
@@ -97,13 +124,15 @@ var Enemy = enchant.Class.create(enchant.Sprite, {
                 var s = new EnemyShoot(this.x, this.y);
             }
 
-            if(player.within(this, 8)) {
+            if(player.within(this, 15) && player.state == 0) {
                 var x = player.x - 16;
                 var y = player.y - 16;
-                player.remove();
+                player.tl.hide();
+                player.state = 1;
                 this.remove();
+                game.assets['playerexplode.mp3'].play();
                 var explosion = new playerexplode(x, y);
-                explosion.remove();
+                explosion.remove;
             }
 
 
@@ -141,7 +170,6 @@ var Shoot = enchant.Class.create(enchant.Sprite, {
         this.direction = direction;
         this.moveSpeed = 10;
         this.addEventListener('enterframe', function () {
-            //this.x += this.moveSpeed * Math.cos(this.direction);
             this.y += this.moveSpeed * direction;
             if(this.y > 320 || this.x > 320 || this.x < -this.width || this.y < -this.height) {
                 this.remove();
@@ -157,13 +185,18 @@ var Shoot = enchant.Class.create(enchant.Sprite, {
 
 
 var PlayerShoot = enchant.Class.create(Shoot, {
-    initialize: function (x, y) {
+    initialize: function (x, y, s) {
         Shoot.call(this, x, y, -2);
         this.frame = PLAYERSHOOTFRAME;
         this.addEventListener('enterframe', function () {
             for (var i in enemies) {
                 if(enemies[i].intersect(this)) {
                     this.remove();
+                    if(s==0){
+                      game.assets['enemyexplode.wav'].play();
+                    }else if(s==1){
+                      game.assets['enemyexplode1.wav'].play();
+                    }
                     var explosion = new enemyexplode(enemies[i].x, enemies[i].y);
                     enemies[i].remove();
                     game.score += 100;
@@ -179,11 +212,13 @@ var EnemyShoot = enchant.Class.create(Shoot, {
         Shoot.call(this, x, y, 1);
         this.frame = ENEMYSHOOTFRAME;
         this.addEventListener('enterframe', function () {
-            if(player.within(this, 8)) {
+            if(player.within(this, 16) && player.state == 0) {
                 var x = player.x - 16;
                 var y = player.y - 16;
-                player.remove();
+                player.tl.hide();
+                player.state = 1;
                 this.remove();
+                game.assets['playerexplode.mp3'].play();
                 var explosion = new playerexplode(x, y);
                 explosion.remove;
             }
@@ -237,6 +272,7 @@ var playerexplode = enchant.Class.create(enchant.Sprite, {
             this.frame = PEXPLODE[3];
             this.remove();
             game.end(0, "Goal!")
+            game.assets['endsong.wav'].play();
             alert('Game over! Score:' + game.score)
           }
       });

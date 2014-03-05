@@ -103,6 +103,7 @@ var Enemy = enchant.Class.create(enchant.Sprite, {
                 player.remove();
                 this.remove();
                 var explosion = new playerexplode(x, y);
+                explosion.remove();
             }
 
 
@@ -184,6 +185,7 @@ var EnemyShoot = enchant.Class.create(Shoot, {
                 player.remove();
                 this.remove();
                 var explosion = new playerexplode(x, y);
+                explosion.remove;
             }
         });
     }
@@ -234,7 +236,8 @@ var playerexplode = enchant.Class.create(enchant.Sprite, {
           if(this.age % 10 == 0 && i == 4){
             this.frame = PEXPLODE[3];
             this.remove();
-            game.end(game.score, "SCORE: " + game.score)
+            game.end(0, "Goal!")
+            alert('Game over! Score:' + game.score)
           }
       });
 

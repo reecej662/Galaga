@@ -1,6 +1,8 @@
 /***
-*
 *   Reece Jackson
+*
+*   March 2014
+*   Advanced Javascript
 *
 *   A modified version of Galaga made using javascript and the enchant.js framework
 *
